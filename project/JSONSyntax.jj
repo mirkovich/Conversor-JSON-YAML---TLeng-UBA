@@ -35,21 +35,21 @@ TOKEN :
 }
 
 
-// TOKEN DE SIMBOLOS QUE DENOTAN VALORES EN EL MUNDO JSON
-TOKEN :
-{
-  <IDENTIFIER:["a"-"z","A"-"Z"](["a"-"z","A"-"Z","0"-"9","_"])*>      // 8
-  | <NUMBER: (["0"-"9"])+>                                            // 9
-  | <DECIMAL: (["0"-"9"])+["."](["0"-"9"])+>                          // 10
-  | <EXPONENCIAL: (["0"-"9"])+["."](["0"-"9"])+["e"](["0"-"9"])+>     // 11
-}
-
 // TOKEN DE VALORES RESERVADOS "PRIMITIVOS"
 TOKEN :
 {
-  <TRUE:"true">       // 12
-  |<FALSE:"false">    // 13
-  |<NULL:"null">      // 14
+  <TRUE:"true">       // 8
+  |<FALSE:"false">    // 9
+  |<NULL:"null">      // 10
+}
+
+// TOKEN DE SIMBOLOS QUE DENOTAN VALORES EN EL MUNDO JSON
+TOKEN :
+{
+  <IDENTIFIER:["a"-"z","A"-"Z"](["a"-"z","A"-"Z","0"-"9","_"])*>      // 11
+  | <NUMBER: (["0"-"9"])+>                                            // 12
+  | <DECIMAL: (["0"-"9"])+["."](["0"-"9"])+>                          // 13
+  | <EXPONENCIAL: (["0"-"9"])+["."](["0"-"9"])+["e"](["0"-"9"])+>     // 14
 }
 
 // CARACTERES QUE NO SE TOMAN EN CUENTA
