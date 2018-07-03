@@ -1,13 +1,13 @@
-PARSER_BEGIN(jsonsintax)
+PARSER_BEGIN(JSONSyntax)
 import java.io.*;
 
-class jsonsintax
+class JSONSyntax
 {
     public static void main(String[] args ) throws ParseException,Exception
     {
       try
         {
-          jsonsintax analizador = new jsonsintax(System.in);
+          JSONSyntax analizador = new JSONSyntax(System.in);
           analizador.Programa();
           System.out.println("Analizador ha terminado");
         }
@@ -18,7 +18,7 @@ class jsonsintax
         }
     }
 }
-PARSER_END(jsonsintax)
+PARSER_END(JSONSyntax)
 
 
 // TOKEN DE SIMBOLOS QUE SE USAN EN LA SINTAXIS
@@ -62,7 +62,8 @@ SKIP :
 // *  un objeto {clave:valor,clave2:valor2,.......}
 // *  un array   [valor1,valor2,valor3,....]
 void Programa() :
-{}
+{
+}
 {
   Object()|Array()
 }
