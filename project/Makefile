@@ -1,3 +1,4 @@
 all:
-	javacc JSONSyntax.jj
-	javac JSONSyntax.java
+	jjtree JSONParser.jjt
+	javacc JSONParser.jj
+	javac JSONParser.java
