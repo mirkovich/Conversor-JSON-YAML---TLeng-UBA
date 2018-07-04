@@ -13,16 +13,72 @@ class JSONParser
         try
         {
             JSONParser analizador = new JSONParser(System.in);
-            SimpleNode n = analizador.Programa();
-            n.dump(">");
+            analizador.Programa().jjtAccept(new JSONToYAMLVisitor(), 0);
+            //SimpleNode n = analizador.Programa();
+            //n.dump(">");
         }
         catch(ParseException e)
         {
             System.out.println(e.getMessage());
+            System.out.println("Error al parsear");
         }
-        System.out.println("Analizador ha terminado");
+
     }
 }
+
+class JSONToYAMLVisitor implements JSONParserVisitor {
+
+    public Object visit(SimpleNode node, Object data) {
+        return null;
+    }
+    public Object visit(ASTRoot node, Object data) {
+        node.childrenAccept(this, data);
+        return null;
+    }
+    public Object visit(ASTObject node, Object data) {
+        int nivelAnidacion = (Integer) data + 1;
+        if (nivelAnidacion > 1) System.out.print("\n");
+        node.childrenAccept(this, data);
+        return null;
+    }
+    public Object visit(ASTListaIdentificadorValor node, Object data) {
+        int nivelAnidacion = (Integer) data;
+        String prefijo = "";
+        for(int i = 1; i < nivelAnidacion; i++) prefijo = prefijo + "    ";
+        System.out.print(prefijo);
+        node.childrenAccept(this, data);
+        return null;
+    }
+    public Object visit(ASTIdentificadorValor node, Object data) {
+        System.out.print("id: ");
+        node.childrenAccept(this, data);
+        return null;
+    }
+    public Object visit(ASTArray node, Object data) {
+        int nivelAnidacion = (Integer) data + 1;
+        if (nivelAnidacion > 1) System.out.print("\n");
+        node.childrenAccept(this, nivelAnidacion);
+        return null;
+    }
+    public Object visit(ASTListaValor node, Object data) {
+        int nivelAnidacion = (Integer) data;
+        String prefijo = "";
+        for(int i = 1; i < nivelAnidacion; i++) prefijo = prefijo + "    ";
+        System.out.print(prefijo + "-");
+        node.childrenAccept(this, data);
+        return null;
+    }
+    public Object visit(ASTValor node, Object data) {
+        node.childrenAccept(this, data);
+        return null;
+    }
+    public Object visit(ASTValorPrimitivo node, Object data) {
+        System.out.print("valor\n");
+        node.childrenAccept(this, data);
+        return null;
+    }
+}
+
 PARSER_END(JSONParser)
 
 // Analisis lexico
@@ -69,46 +125,51 @@ SKIP :
 // ALGO en JSON es :
 // *  un objeto {clave:valor,clave2:valor2,.......}
 // *  un array   [valor1,valor2,valor3,....]
-ASTroot Programa() #root :
+ASTRoot Programa() #Root :
+{}
 {
-}
-{
-Object()|Array()
+(Object()|Array())
 { return jjtThis; }
 }
 
-void Object() #object :
+void Object() #Object :
 {}
 {
 <LBRACE> ListaIdentificadorValor() <RBRACE>
 }
 
-void ListaIdentificadorValor() #listaIdVal :
+void ListaIdentificadorValor() #ListaIdentificadorValor :
 {}
 {
 IdentificadorValor() (LOOKAHEAD(2) <COMMA> ListaIdentificadorValor())*
 }
 
-void IdentificadorValor() #idVal :
+void IdentificadorValor() #IdentificadorValor :
 {}
 {
 <IDENTIFIER> <DOTDOT> Valor()
 }
 
-void Array() #array :
+void Array() #Array :
 {}
 {
 <LBRACKET> ListaValor() <RBRACKET>
 }
 
-void ListaValor() #listaVal :
+void ListaValor() #ListaValor :
 {}
 {
 Valor() (LOOKAHEAD(2) <COMMA> ListaValor())*
 }
 
-void Valor() #val :
+void Valor() #Valor :
 {}
 {
-(<IDENTIFIER>|<NUMBER>|<DECIMAL>|<EXPONENCIAL>|<FALSE>|<TRUE>|<NULL>|Array()|Object())
+(ValorPrimitivo()|Array()|Object())
+}
+
+void ValorPrimitivo() #ValorPrimitivo :
+{}
+{
+(<IDENTIFIER>|<NUMBER>|<DECIMAL>|<EXPONENCIAL>|<FALSE>|<TRUE>|<NULL>)
 }

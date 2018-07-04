@@ -1,16 +1,22 @@
 #Como ejecutar Javacc
 
 
-Abrimos una terminal en el lugar donde se encuentra nuestro archivo.jj
+Abrimos una terminal en el lugar donde se encuentra nuestro JSONParser.jjt
 
 Ejecutamos por consola:
 
-* javacc archivo.jj
+* jjtree JSONParser.jjt
+
+* javacc JSONParser.jj
 
 * javac *.java
 
-* java archivo<test.txt
+* java JSONParser < test.txt
 
+O usamos el Makefile:
+
+* make
+* JSONParser < test.txt
 
 	**listorti**
 
