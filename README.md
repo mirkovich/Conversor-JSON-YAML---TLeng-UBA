@@ -16,7 +16,7 @@ Ejecutamos por consola:
 O usamos el Makefile:
 
 * make
-* JSONParser < test.txt
+* java JSONParser < test.txt
 
 	**listorti**
 

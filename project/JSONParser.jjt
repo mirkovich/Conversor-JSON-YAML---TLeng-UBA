@@ -38,7 +38,7 @@ class JSONToYAMLVisitor implements JSONParserVisitor {
     public Object visit(ASTObject node, Object data) {
         int nivelAnidacion = (Integer) data + 1;
         if (nivelAnidacion > 1) System.out.print("\n");
-        node.childrenAccept(this, data);
+        node.childrenAccept(this, nivelAnidacion);
         return null;
     }
     public Object visit(ASTListaIdentificadorValor node, Object data) {
@@ -50,10 +50,17 @@ class JSONToYAMLVisitor implements JSONParserVisitor {
         return null;
     }
     public Object visit(ASTIdentificadorValor node, Object data) {
-        System.out.print("id: ");
         node.childrenAccept(this, data);
         return null;
     }
+
+    public Object visit(ASTIdentificador node, Object data) {
+		String label = (String) node.jjtGetValue();
+        System.out.print(label+": ");
+        node.childrenAccept(this, data);
+        return null;
+    }
+
     public Object visit(ASTArray node, Object data) {
         int nivelAnidacion = (Integer) data + 1;
         if (nivelAnidacion > 1) System.out.print("\n");
@@ -64,7 +71,7 @@ class JSONToYAMLVisitor implements JSONParserVisitor {
         int nivelAnidacion = (Integer) data;
         String prefijo = "";
         for(int i = 1; i < nivelAnidacion; i++) prefijo = prefijo + "    ";
-        System.out.print(prefijo + "-");
+        System.out.print(prefijo + "- ");
         node.childrenAccept(this, data);
         return null;
     }
@@ -73,7 +80,8 @@ class JSONToYAMLVisitor implements JSONParserVisitor {
         return null;
     }
     public Object visit(ASTValorPrimitivo node, Object data) {
-        System.out.print("valor\n");
+		String label = (String) node.jjtGetValue();
+        System.out.print(label+"\n");
         node.childrenAccept(this, data);
         return null;
     }
@@ -147,7 +155,14 @@ IdentificadorValor() (LOOKAHEAD(2) <COMMA> ListaIdentificadorValor())*
 void IdentificadorValor() #IdentificadorValor :
 {}
 {
-<IDENTIFIER> <DOTDOT> Valor()
+(Identificador() <DOTDOT> Valor())
+}
+
+void Identificador() #Identificador :
+{}
+{
+<IDENTIFIER>
+{ jjtThis.jjtSetValue(token.image); }
 }
 
 void Array() #Array :
@@ -172,4 +187,5 @@ void ValorPrimitivo() #ValorPrimitivo :
 {}
 {
 (<IDENTIFIER>|<NUMBER>|<DECIMAL>|<EXPONENCIAL>|<FALSE>|<TRUE>|<NULL>)
+{ jjtThis.jjtSetValue(token.image); }
 }
