@@ -1,6 +1,7 @@
 options {
     MULTI = true;
     VISITOR = true;
+    UNICODE_INPUT=true;
 }
 
 PARSER_BEGIN(JSONParser)
@@ -46,7 +47,7 @@ class JSONToYAMLVisitor implements JSONParserVisitor {
         node.childrenAccept(this, data);
         return null;
     }
-    public Object visit(ASTListaIdentificadorValor node, Object data) {
+    public Object visit(ASTMembers node, Object data) {
         int nivelAnidacion = (Integer) data;
         String prefijo = "";
         for(int i = 1; i < nivelAnidacion; i++) prefijo = prefijo + "    ";
@@ -54,13 +55,18 @@ class JSONToYAMLVisitor implements JSONParserVisitor {
         node.childrenAccept(this, data);
         return null;
     }
-    public Object visit(ASTIdentificadorValor node, Object data) {
+    public Object visit(ASTPair node, Object data) {
         node.childrenAccept(this, data);
         return null;
     }
-    public Object visit(ASTIdentificador node, Object data) {
+    public Object visit(ASTIDString node, Object data) {
 		String label = (String) node.jjtGetValue();
+        label = label.substring(1, label.length()-1); //Le saco las comillas
         System.out.print(label+": ");
+        node.childrenAccept(this, data);
+        return null;
+    }
+    public Object visit(ASTChars node, Object data) {
         node.childrenAccept(this, data);
         return null;
     }
@@ -75,7 +81,7 @@ class JSONToYAMLVisitor implements JSONParserVisitor {
         node.childrenAccept(this, data);
         return null;
     }
-    public Object visit(ASTListaValor node, Object data) {
+    public Object visit(ASTElements node, Object data) {
         int nivelAnidacion = (Integer) data;
         String prefijo = "";
         for(int i = 1; i < nivelAnidacion; i++) prefijo = prefijo + "    ";
@@ -83,11 +89,11 @@ class JSONToYAMLVisitor implements JSONParserVisitor {
         node.childrenAccept(this, data);
         return null;
     }
-    public Object visit(ASTValor node, Object data) {
+    public Object visit(ASTValue node, Object data) {
         node.childrenAccept(this, data);
         return null;
     }
-    public Object visit(ASTValorPrimitivo node, Object data) {
+    public Object visit(ASTTValue node, Object data) {
 		String label = (String) node.jjtGetValue();
         System.out.print(label+"\n");
         node.childrenAccept(this, data);
@@ -99,59 +105,61 @@ PARSER_END(JSONParser)
 
 // Analisis lexico
 
+// CARACTERES QUE NO SE TOMAN EN CUENTA
+SKIP :
+{
+    //ESPACIOS EN BLANCO
+    < WS : ([" ","\t"]) > |
+    //SALTOS DE LINEA
+    < NL : (["\n","\r","\f"])+ >
+}
+
+
 // TOKEN DE SIMBOLOS QUE SE USAN EN LA SINTAXIS
 TOKEN :
 {
-  <ASIGNACION : "=">  // 1
-  | <LBRACE:"{">      // 2
-  | <RBRACE:"}">      // 3
-  | <LBRACKET:"[">    // 4
-  | <RBRACKET:"]">    // 5
-  | <COMMA:",">       // 6
-  | <DOTDOT:":">      // 7
+    <LBRACE:"{"> |
+    <RBRACE:"}"> |
+    <LBRACKET:"["> |
+    <RBRACKET:"]"> |
+    <COMMA:","> |
+    <DOTDOT:":"> |
+    <QUOTE:"\"">
 
 }
-
 
 // TOKEN DE VALORES RESERVADOS "PRIMITIVOS"
 TOKEN :
 {
-  <TRUE:"true">       // 8
-  |<FALSE:"false">    // 9
-  |<NULL:"null">      // 10
-}
+    <TRUE:"true"> |
+    <FALSE:"false"> |
+    <NULL:"null"> |
 
-// TOKEN DE SIMBOLOS QUE DENOTAN VALORES EN EL MUNDO JSON
-TOKEN :
-{
-  <IDENTIFIER:(["a"-"z","A"-"Z","0"-"9","_","\"", "\\"])+>                         // 11
-  | <NUMBER: (["-","+"])? (["0"-"9"])+>                                            // 12
-  | <DECIMAL: (["-","+"])? (["0"-"9"])+["."](["0"-"9"])+>                          // 13
-  | <EXPONENCIAL: (["-","+"])? (["0"-"9"])+["."](["0"-"9"])+["e"](["0"-"9"])+>     // 14
-}
+    //TODOS LOS UNICODE MENOS <QUOTE> 0022 Y <BARRA> 005C
+    <#UNICODE: ["\u0000"-"\u0021", "\u0023"-"\u005b", "\u005d"-"\uffff"] > |
+    <STRING: (<QUOTE>(<UNICODE>)*<QUOTE>) > |
 
-// CARACTERES QUE NO SE TOMAN EN CUENTA
-SKIP :
-{
-  " "|"\n"|"\r"|"\r\n"|"\t"
+    //NUMERO ENTERO | NUMERO CON DECIMALES
+    <#NUM: (((["-","+"])? (["0"-"9"])+) | ((["-","+"])? (["0"-"9"])* "." (["0"-"9"])+)) > |
+    //EXPONENTE 
+    <#EXP: (["E","e"] (["-","+"])? (["0"-"9"])+) > |
+
+    <NUMBER: <NUM>(<EXP>)?>
 }
 
 // Analisis Sintactico
 
-// ALGO en JSON es :
-// *  un objeto {clave:valor,clave2:valor2,.......}
-// *  un array   [valor1,valor2,valor3,....]
 ASTRoot Raiz() #Root :
 {}
 {
-(LOOKAHEAD(2) Object()| LOOKAHEAD(2) Array()|EmptyObject()|EmptyArray())
+(LOOKAHEAD(2) Object()| LOOKAHEAD(2) Array() | EmptyObject() | EmptyArray())
 { return jjtThis; }
 }
 
 void Object() #Object :
 {}
 {
-<LBRACE> ListaIdentificadorValor() <RBRACE>
+<LBRACE> Members() <RBRACE>
 }
 
 void EmptyObject() #EmptyObject :
@@ -160,29 +168,29 @@ void EmptyObject() #EmptyObject :
 <LBRACE> <RBRACE>
 }
 
-void ListaIdentificadorValor() #ListaIdentificadorValor :
+void Members() #Members :
 {}
 {
-IdentificadorValor() (LOOKAHEAD(2) <COMMA> ListaIdentificadorValor())*
+Pair() (LOOKAHEAD(2) <COMMA> Members())*
 }
 
-void IdentificadorValor() #IdentificadorValor :
+void Pair() #Pair :
 {}
 {
-(Identificador() <DOTDOT> Valor())
+(IDString() <DOTDOT> Value())
 }
 
-void Identificador() #Identificador :
+void IDString() #IDString :
 {}
 {
-<IDENTIFIER>
+<STRING>
 { jjtThis.jjtSetValue(token.image); }
 }
 
 void Array() #Array :
 {}
 {
-<LBRACKET> ListaValor() <RBRACKET>
+<LBRACKET> Elements() <RBRACKET>
 }
 
 void EmptyArray() #EmptyArray :
@@ -191,21 +199,21 @@ void EmptyArray() #EmptyArray :
 <LBRACKET> <RBRACKET>
 }
 
-void ListaValor() #ListaValor :
+void Elements() #Elements :
 {}
 {
-Valor() (LOOKAHEAD(2) <COMMA> ListaValor())*
+Value() (LOOKAHEAD(2) <COMMA> Elements())*
 }
 
-void Valor() #Valor :
+void Value() #Value :
 {}
 {
-(ValorPrimitivo()|LOOKAHEAD(2) Object()| LOOKAHEAD(2) Array()|EmptyObject()|EmptyArray())
+(TValue() | LOOKAHEAD(2) Object()| LOOKAHEAD(2) Array() | EmptyObject() | EmptyArray())
 }
 
-void ValorPrimitivo() #ValorPrimitivo :
+void TValue() #TValue :
 {}
 {
-(<IDENTIFIER>|<NUMBER>|<DECIMAL>|<EXPONENCIAL>|<FALSE>|<TRUE>|<NULL>)
+(<STRING>|<NUMBER>|<FALSE>|<TRUE>|<NULL>)
 { jjtThis.jjtSetValue(token.image); }
 }
