@@ -6,9 +6,13 @@ options {
 
 PARSER_BEGIN(JSONParser)
 import java.io.*;
+import java.util.Set;
+import java.util.HashSet;
 
 class JSONParser
 {
+    protected static Set<String> clavesDefinidas = new HashSet<String>();
+
     public static void main(String[] args ) throws ParseException,Exception
     {
         try
@@ -184,7 +188,11 @@ void IDString() #IDString :
 {}
 {
 <STRING>
-{ jjtThis.jjtSetValue(token.image); }
+{ 
+if (clavesDefinidas.contains(token.image)) throw new ParseException("Clave " + token.image + " duplicada");
+clavesDefinidas.add(token.image);
+jjtThis.jjtSetValue(token.image); 
+}
 }
 
 void Array() #Array :
