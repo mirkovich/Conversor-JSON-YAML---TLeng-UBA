@@ -8,10 +8,11 @@ PARSER_BEGIN(JSONParser)
 import java.io.*;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Stack;
 
 class JSONParser
 {
-    protected static Set<String> clavesDefinidas = new HashSet<String>();
+    protected static Stack<Set<String>> clavesDefinidas = new Stack<Set<String>>();
 
     public static void main(String[] args ) throws ParseException,Exception
     {
@@ -64,16 +65,13 @@ class JSONToYAMLVisitor implements JSONParserVisitor {
         return null;
     }
     public Object visit(ASTIDString node, Object data) {
+        int nivelAnidacion = (Integer) data;
 		String label = (String) node.jjtGetValue();
-        label = label.substring(1, label.length()-1); //Le saco las comillas
+        if(nivelAnidacion <= 1 )label = label.substring(1, label.length()-1); //Le saco las comillas
         System.out.print(label+": ");
         node.childrenAccept(this, data);
         return null;
     }
-//    public Object visit(ASTChars node, Object data) {
-//        node.childrenAccept(this, data);
-//        return null;
-//    }
     public Object visit(ASTArray node, Object data) {
         int nivelAnidacion = (Integer) data + 1;
         if (nivelAnidacion > 1) System.out.print("\n");
@@ -145,7 +143,7 @@ TOKEN :
 
     //NUMERO ENTERO | NUMERO CON DECIMALES
     <#NUM: (((["-","+"])? (["0"-"9"])+) | ((["-","+"])? (["0"-"9"])* "." (["0"-"9"])+)) > |
-    //EXPONENTE
+    //EXPONENTE 
     <#EXP: (["E","e"] (["-","+"])? (["0"-"9"])+) > |
 
     <NUMBER: <NUM>(<EXP>)?>
@@ -163,6 +161,8 @@ ASTRoot Raiz() #Root :
 void Object() #Object :
 {}
 {
+//Agregamos un conjunto de claves definidas para este objeto
+{clavesDefinidas.push(new HashSet<String>());}
 <LBRACE> Members() <RBRACE>
 }
 
@@ -188,10 +188,10 @@ void IDString() #IDString :
 {}
 {
 <STRING>
-{
-if (clavesDefinidas.contains(token.image)) throw new ParseException("Clave " + token.image + " duplicada");
-clavesDefinidas.add(token.image);
-jjtThis.jjtSetValue(token.image);
+{ 
+if (clavesDefinidas.peek().contains(token.image)) throw new ParseException("Clave " + token.image + " duplicada");
+clavesDefinidas.peek().add(token.image);
+jjtThis.jjtSetValue(token.image); 
 }
 }
 

@@ -1,1 +1,2 @@
-[3,{"clave1": "valor1","clave2":"lados"}, "hola",123,[2,2],{"sisi":"nono"}]
+[ {"clave1": "valor1", "clave2": [ 125, "Cadena 1" ], "- clave3": true}, "Cadena con salto
+ de lı́nea", [null, 35.6e9, {"clave1":58}] ]
